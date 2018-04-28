@@ -117,8 +117,37 @@ namespace Ooui
             foreach (var child in toRemove) {
                 child.MessageSent -= HandleChildMessageSent;
                 Call ("removeChild", child);
+                // TODO: Should call OnChildRemoved?
             }
             InsertBefore (newNode, null);
+        }
+
+        public void ReplaceChildren(IEnumerable<Node> newChildren)
+        {
+            var toRemove = new List<Node>();
+            lock (children)
+            {
+                toRemove.AddRange(children);
+                children.Clear();
+                children.AddRange(newChildren);
+            }
+
+            foreach (var child in toRemove)
+            {
+                child.MessageSent -= HandleChildMessageSent;
+                Call("removeChild", child);
+                // TODO: Should call OnChildRemoved?
+            }
+
+            foreach (var child in newChildren)
+            {
+                if (child != null)
+                {
+                    child.MessageSent += HandleChildMessageSent;
+                    Call("insertBefore", child, null);
+                    // TODO: Should call OnChildInsertedBefore?
+                }
+            }
         }
 
         void HandleChildMessageSent (Message message)
