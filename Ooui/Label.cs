@@ -4,9 +4,9 @@ namespace Ooui
 {
     public class Label : Element
     {
-        public Element For {
-            get => GetAttribute<Element> ("for", null);
-            set => SetAttributeProperty ("for", value);
+        public string For {
+            get => GetAttribute<string> ("for", null);
+            set => SetAttributeProperty("for", value);
         }
 
         public Label ()
