@@ -154,9 +154,8 @@ namespace Ooui
                 }
                 else
                 {
-                    var next = i + 1 < current.Count ? current[i + 1] : null;
-                    child.MessageSent += HandleChildMessageSent;
-                    Call("insertBefore", child, next);
+                    //var next = i + 1 < current.Count ? current[i + 1] : null;
+                    Call("insertBefore", child, existing);
 
                     if (current.Remove(child))
                     {
@@ -165,6 +164,7 @@ namespace Ooui
                     }
                     else
                     {
+                        child.MessageSent += HandleChildMessageSent;
                         current.Insert(i, child);
                         return;
                     }
