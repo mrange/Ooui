@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ooui
 {
@@ -122,32 +123,67 @@ namespace Ooui
             InsertBefore (newNode, null);
         }
 
-        public void ReplaceChildren(IEnumerable<Node> newChildren)
+        public void ReplaceChildren(IEnumerable<Node> replaceWith)
         {
-            var toRemove = new List<Node>();
+            var wanted = replaceWith.Where(n => n != null).ToArray();
+
+            var current = new List<Node>();
+
             lock (children)
             {
-                toRemove.AddRange(children);
+                current.AddRange(children);
                 children.Clear();
-                children.AddRange(newChildren);
+                children.AddRange(wanted);
             }
 
-            foreach (var child in toRemove)
+            var previous = current.ToArray();
+
+            void RemoveChild(Node child)
             {
                 child.MessageSent -= HandleChildMessageSent;
                 Call("removeChild", child);
-                // TODO: Should call OnChildRemoved?
+                current.Remove(child);
             }
 
-            foreach (var child in newChildren)
+            void InsertAt(int i, Node child)
             {
-                if (child != null)
+                var existing = i < current.Count ? current[i] : null;
+                if (existing != null && existing.PersistentId == child.PersistentId)
                 {
+                    return;
+                }
+                else
+                {
+                    var next = i + 1 < current.Count ? current[i + 1] : null;
                     child.MessageSent += HandleChildMessageSent;
-                    Call("insertBefore", child, null);
-                    // TODO: Should call OnChildInsertedBefore?
+                    Call("insertBefore", child, next);
+
+                    if (current.Remove(child))
+                    {
+                        current.Insert(i, child);
+                        return;
+                    }
+                    else
+                    {
+                        current.Insert(i, child);
+                        return;
+                    }
                 }
             }
+
+            var insertionPoint = 0;
+
+            for (var iter = 0; iter < wanted.Length; ++iter)
+            {
+                InsertAt(insertionPoint, wanted[iter]);
+                ++insertionPoint;
+            }
+
+            for (var iter = current.Count - 1; iter >= insertionPoint; --iter)
+            {
+                RemoveChild(current[iter]);
+            }
+
         }
 
         void HandleChildMessageSent (Message message)
