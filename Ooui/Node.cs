@@ -36,6 +36,16 @@ namespace Ooui
                 return sb.ToString ();
             }
             set {
+                if (Children.Count == 1)
+                {
+                    var textNode = Children[0] as TextNode;
+                    if (textNode != null)
+                    {
+                        textNode.Text = value;
+                        return;
+                    }
+                }
+
                 ReplaceAll (new TextNode (value ?? ""));
             }
         }
@@ -123,6 +133,11 @@ namespace Ooui
             InsertBefore (newNode, null);
         }
 
+        public void ReplaceChildrenWith(params Node[] nodes)
+        {
+            ReplaceChildren(nodes);
+        }
+
         public void ReplaceChildren(IEnumerable<Node> replaceWith)
         {
             var wanted = replaceWith.Where(n => n != null).ToArray();
@@ -142,6 +157,7 @@ namespace Ooui
             {
                 child.MessageSent -= HandleChildMessageSent;
                 Call("removeChild", child);
+                // TODO: Should call OnChildRemoved?
                 current.Remove(child);
             }
 
@@ -156,6 +172,7 @@ namespace Ooui
                 {
                     //var next = i + 1 < current.Count ? current[i + 1] : null;
                     Call("insertBefore", child, existing);
+                    // TODO: Should call OnInsertBefore?
 
                     if (current.Remove(child))
                     {

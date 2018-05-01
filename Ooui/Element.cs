@@ -7,7 +7,9 @@ namespace Ooui
 {
     public abstract class Element : Node
     {
-        readonly Dictionary<string, object> attributes = new Dictionary<string, object> ();
+        readonly Dictionary<string, object> attributes          = new Dictionary<string, object> ();
+
+        readonly Dictionary<string, object> localAttributes     = new Dictionary<string, object> ();
 
         Document document = null;
 
@@ -236,6 +238,33 @@ namespace Ooui
                     Key = attributeName,
                 });
             }
+        }
+
+        public void SetLocalAttribute(string attributeName, object value)
+        {
+            lock (localAttributes)
+            {
+                localAttributes[attributeName] = value;
+            }
+        }
+
+        public object GetLocalAttribute(string attributeName)
+        {
+            lock (localAttributes)
+            {
+                localAttributes.TryGetValue(attributeName, out var v);
+                return v;
+            }
+        }
+
+        protected bool SetLocalAttributeProperty(string attributeName, object newValue, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
+        {
+            var old = GetLocalAttribute(attributeName);
+            if (old != null && old.Equals(newValue))
+                return false;
+            SetLocalAttribute(attributeName, newValue);
+            OnPropertyChanged(propertyName);
+            return true;
         }
 
         public void SetCapture (bool retargetToElement)
